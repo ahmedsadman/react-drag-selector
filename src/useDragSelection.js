@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function useDragSelection() {
   const [dragStart, setDragStart] = useState(null);
@@ -6,6 +6,20 @@ function useDragSelection() {
   const [isMouseDown, setIsMouseDown] = useState(true);
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
+
+  useEffect(() => {
+    registerHandlers();
+
+    return () => {
+      removeHandlers();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dragStart && dragEnd) {
+      setSelectionBox(calculateSelectionBox(dragStart, dragEnd));
+    }
+  }, [dragStart, dragEnd]);
 
   const calculateSelectionBox = (start, end) => ({
     left: Math.min(dragStart.x, dragEnd.x),
@@ -22,10 +36,10 @@ function useDragSelection() {
 
   const onMouseUp = (evt) => {
     evt.preventDefault();
-    removeHandlers();
     setShowSelection(false);
     setSelectionBox(null);
     setIsMouseDown(false);
+    resetSelection();
   }
 
   const onMouseDown = (evt) => {
@@ -39,49 +53,26 @@ function useDragSelection() {
     
     setIsMouseDown(true);
     setDragStart({ x: evt.pageX, y: evt.pageY });
-
-    registerHandlers();
   };
 
   const registerHandlers = () => {
-    window.document.addEventListener('mouseup', onMouseUp, false);
-    window.document.addEventListener('mousemove', onMouseMove, false);
+    window.document.addEventListener('mousedown', onMouseDown);
+    window.document.addEventListener('mouseup', onMouseUp);
+    window.document.addEventListener('mousemove', onMouseMove);
+    console.log('successfully registered event handlers');
   };
 
   const removeHandlers = () => {
-    window.document.removeEventListener('mouseup', onMouseUp, false);
-    window.document.removeEventListener('mousemove', onMouseMove, false);
+    window.document.removeEventListener('mousedown', onMouseDown);
+    window.document.removeEventListener('mouseup', onMouseUp);
+    window.document.removeEventListener('mousemove', onMouseMove);
+    console.log('cleaned up event handlers');
   }
-
-  const bind = () => {
-    window.document.addEventListener('mousedown', onMouseDown, false);
-  };
-
-  const reset = () => {
-    window.document.removeEventListener('mousedown', onMouseDown, false);
-  };
 
   const resetSelection = () => {
     setDragStart(null);
     setDragEnd(null);
   }
-
-  useEffect(() => {
-    reset();
-    bind();
-
-    setIsMouseDown(true);
-
-    return () => {
-      reset();
-    }
-  }, [isMouseDown]);
-
-  useEffect(() => {
-    if (dragStart && dragEnd) {
-      setSelectionBox(calculateSelectionBox(dragStart, dragEnd));
-    }
-  }, [dragStart, dragEnd]);
 
   let selectionStyles = {
     position: 'absolute',
