@@ -8,16 +8,17 @@ function App() {
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
 
-  const calculateBox = (aX, aY, bX, bY) => {
-    const x = Math.abs(aX - bX);
-    const y = Math.abs(aY - bY);
-    return [x, y];
-  }
+  const calculateSelectionBox = (start, end) => ({
+      left: Math.min(dragStart.x, dragEnd.x),
+      top: Math.min(dragStart.y, dragEnd.y),
+      width: Math.abs(start.x - end.x),
+      height: Math.abs(start.y - end.y)
+  });
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
     if (!isMouseDown) return;
-    setDragEnd([evt.pageX, evt.pageY]);
+    setDragEnd({ x: evt.pageX, y: evt.pageY });
   };
 
   const onMouseUp = (evt) => {
@@ -38,7 +39,7 @@ function App() {
     setShowSelection(true);
     
     setIsMouseDown(true);
-    setDragStart([evt.pageX, evt.pageY]);
+    setDragStart({ x: evt.pageX, y: evt.pageY });
 
     registerHandlers();
   };
@@ -79,19 +80,13 @@ function App() {
 
   useEffect(() => {
     if (dragStart && dragEnd) {
-      const [width, height] = calculateBox(dragEnd[0], dragEnd[1], dragStart[0], dragStart[1]);
-      setSelectionBox({
-        left: `${Math.min(dragStart[0], dragEnd[0])}px`,
-        top: `${Math.min(dragStart[1], dragEnd[1])}px`,
-        width: `${width}px`,
-        height: `${height}px`
-      });
+      setSelectionBox(calculateSelectionBox(dragStart, dragEnd));
     }
   }, [dragStart, dragEnd]);
 
   let selectionStyles = {
     position: 'absolute',
-    zIndex: -10,
+    zIndex: 100,
     border: '1px solid red',
     display: showSelection ? 'inline-block' : 'none'
   }
@@ -106,7 +101,7 @@ function App() {
   const renderBoxes = () => {
     const boxes = [];
     for (let i = 0; i < 20; i++) {
-      const box = <div className='box' data-draggable={true}>Box</div>;
+      const box = <div className='box' key={i} data-draggable={true}>Box</div>;
       boxes.push(box);
     }
     return boxes;
