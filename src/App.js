@@ -6,6 +6,7 @@ function App() {
   const [dragEnd, setDragEnd] = useState(null);
   const [isMouseDown, setIsMouseDown] = useState(true);
   const [selectionBox, setSelectionBox] = useState(null);
+  const [showSelection, setShowSelection] = useState(false);
 
   const calculateBox = (aX, aY, bX, bY) => {
     const x = Math.abs(aX - bX);
@@ -25,17 +26,19 @@ function App() {
   const onMouseUp = (evt) => {
     evt.preventDefault();
     removeHandlers();
-
-    console.log('drag end', evt.pageX, evt.pageY);
+    setShowSelection(false);
     setIsMouseDown(false);
-    // setDragEnd([evt.pageX, evt.pageY]);
   }
 
   const onMouseDown = (evt) => {
     evt.preventDefault();
-    resetSelection();
+    if (evt.target.dataset.draggable) {
+      return;
+    }
 
-    console.log('drag start', evt.pageX, evt.pageY);
+    resetSelection();
+    setShowSelection(true);
+    
     setIsMouseDown(true);
     setDragStart([evt.pageX, evt.pageY]);
 
@@ -91,8 +94,9 @@ function App() {
 
   let selectionStyles = {
     position: 'absolute',
-    zIndex: 1000000,
-    border: '3px solid black'
+    zIndex: -10,
+    border: '1px solid red',
+    display: showSelection ? 'inline-block' : 'none'
   }
 
   if (selectionBox) {
@@ -102,8 +106,20 @@ function App() {
     }
   }
 
+  const renderBoxes = () => {
+    const boxes = [];
+    for (let i = 0; i < 20; i++) {
+      const box = <div className='box' data-draggable={true}>Box</div>;
+      boxes.push(box);
+    }
+    return boxes;
+  }
+
   return (
-    <div style={{ border: '1px solid black', ...selectionStyles }}></div>
+    <div className='container'>
+      <div style={selectionStyles}></div>
+      {renderBoxes()}
+    </div>
   );
 }
 
