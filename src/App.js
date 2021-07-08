@@ -11,15 +11,12 @@ function App() {
   const calculateBox = (aX, aY, bX, bY) => {
     const x = Math.abs(aX - bX);
     const y = Math.abs(aY - bY);
-
-    console.log('size', x, y);
     return [x, y];
   }
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
     if (!isMouseDown) return;
-    console.log('is moving');
     setDragEnd([evt.pageX, evt.pageY]);
   };
 
@@ -27,6 +24,7 @@ function App() {
     evt.preventDefault();
     removeHandlers();
     setShowSelection(false);
+    setSelectionBox(null);
     setIsMouseDown(false);
   }
 
@@ -82,7 +80,6 @@ function App() {
   useEffect(() => {
     if (dragStart && dragEnd) {
       const [width, height] = calculateBox(dragEnd[0], dragEnd[1], dragStart[0], dragStart[1]);
-      console.log(width, height);
       setSelectionBox({
         left: `${Math.min(dragStart[0], dragEnd[0])}px`,
         top: `${Math.min(dragStart[1], dragEnd[1])}px`,
