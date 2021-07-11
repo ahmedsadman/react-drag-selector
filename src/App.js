@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import useDragSelection from './useDragSelection';
 import './App.css';
 
 function App() {
+  const targetRef = useRef(null);
   const [selectedIndexes, setSelectedIndexes] = useState(new Set([]));
 
   const handleSelection = (indexes) => {
     setSelectedIndexes(indexes);
   };
 
-  const { DragSelection } = useDragSelection(handleSelection);
+  const { DragSelection } = useDragSelection(targetRef, handleSelection);
 
   const renderBoxes = () => {
     const boxes = [];
@@ -24,7 +25,7 @@ function App() {
   }
 
   return (
-    <div className='container'>
+    <div className='container' ref={targetRef}>
       <DragSelection />
       {renderBoxes()}
     </div>

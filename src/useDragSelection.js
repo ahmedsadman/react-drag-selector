@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-function useDragSelection(onSelectionChange) {
+function useDragSelection(targetRef, onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
 
@@ -13,6 +13,7 @@ function useDragSelection(onSelectionChange) {
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(new Set([]));
+  let margin = { top: 0, left: 0 };
   const items = document.querySelectorAll('.box');
 
   const setIsMouseDown = (data) => {
@@ -22,6 +23,7 @@ function useDragSelection(onSelectionChange) {
 
   useEffect(() => {
     registerHandlers();
+    getTargetMargin(targetRef);
 
     return () => {
       removeHandlers();
@@ -49,6 +51,17 @@ function useDragSelection(onSelectionChange) {
     setSelectionBox(selectionBox);
   }, [dragStart, dragEnd]);
 
+  const getTargetMargin = (target) => {
+    if (!target.current) return;
+    const boundingBox = target.current.getBoundingClientRect();
+    margin = {
+      top: boundingBox.top + window.scrollY,
+      left: boundingBox.left + window.scrollX,
+      bottom: boundingBox.bottom + window.scrollY,
+      right: boundingBox.right + window.scrollX
+    };
+  }
+
   const calculateSelectionBox = (start, end) => ({
     left: Math.min(dragStart.x, dragEnd.x),
     top: Math.min(dragStart.y, dragEnd.y),
@@ -66,7 +79,7 @@ function useDragSelection(onSelectionChange) {
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
-    if (!isMouseDownRef.current) return;
+    if (!isMouseDownRef.current || !isWithinTarget(evt.pageX, evt.pageY, margin)) return;
     setDragEnd({ x: evt.pageX, y: evt.pageY });
   };
 
@@ -80,9 +93,12 @@ function useDragSelection(onSelectionChange) {
 
   const onMouseDown = (evt) => {
     evt.preventDefault();
-    if (evt.target.dataset.draggable) {
+    if (evt.target.dataset.draggable || !isWithinTarget(evt.pageX, evt.pageY, margin)) {
       return;
     }
+
+    console.log('pagex pagey', evt.pageX, evt.pageY);
+    console.log('target margin', margin);
 
     resetSelection();
     setShowSelection(true);
@@ -90,6 +106,15 @@ function useDragSelection(onSelectionChange) {
     setIsMouseDown(true);
     setDragStart({ x: evt.pageX, y: evt.pageY });
   };
+
+  const isWithinTarget = (pageX, pageY, margin) => {
+    const x1 = pageX - margin.left;
+    const y1 =  pageY - margin.top;
+    const x2 = margin.right - pageX;
+    const y2 = margin.bottom - pageY;
+
+    return x1 >= 0 && y1 >= 0 && x2 >= 0 && y2 >= 0;
+  }
 
   const registerHandlers = () => {
     window.document.addEventListener('mousedown', onMouseDown);
