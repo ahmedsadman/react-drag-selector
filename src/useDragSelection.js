@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 
 function useDragSelection(targetRef, onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
-  const [dragEnd, setDragEnd] = useState(null);
 
   /* Event listeners cannot react on state values. To fix this, we can use 'useRef'
   which allows to handle the latest values in event listeners. Whichever state value is 
   directly used in the event listeners should be handled this way */
+  const [dragEnd, _setDragEnd] = useState(null);
+  const dragEndRef = useRef(dragEnd);
   const [isMouseDown, _setIsMouseDown] = useState(false);
   const isMouseDownRef = useRef(isMouseDown);
 
@@ -19,6 +20,11 @@ function useDragSelection(targetRef, onSelectionChange) {
   const setIsMouseDown = (data) => {
     isMouseDownRef.current = data;
     _setIsMouseDown(data);
+  };
+
+  const setDragEnd = (data) => {
+    dragEndRef.current = data;
+    _setDragEnd(data);
   };
 
   useEffect(() => {
@@ -79,8 +85,24 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
-    if (!isMouseDownRef.current || !isWithinTarget(evt.pageX, evt.pageY, margin)) return;
-    setDragEnd({ x: evt.pageX, y: evt.pageY });
+    if (!isMouseDownRef.current) return;
+
+    let tempPoint = {
+      x: dragEndRef.current?.x || evt.pageX,
+      y: dragEndRef.current?.y || evt.pageY
+    };
+
+    const _isWithinRange = isWithinTarget(evt.pageX, evt.pageY, margin);
+
+    if (_isWithinRange.top && _isWithinRange.bottom) {
+      tempPoint.y = evt.pageY;
+    }
+
+    if (_isWithinRange.left && _isWithinRange.right) {
+      tempPoint.x = evt.pageX;
+    }
+    
+    setDragEnd(tempPoint);
   };
 
   const onMouseUp = (evt) => {
@@ -93,12 +115,11 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   const onMouseDown = (evt) => {
     evt.preventDefault();
-    if (evt.target.dataset.draggable || !isWithinTarget(evt.pageX, evt.pageY, margin)) {
+    const isValidStart = Object.values(isWithinTarget(evt.pageX, evt.pageY, margin)).every(point => point === true);
+
+    if (evt.target.dataset.draggable || !isValidStart) {
       return;
     }
-
-    console.log('pagex pagey', evt.pageX, evt.pageY);
-    console.log('target margin', margin);
 
     resetSelection();
     setShowSelection(true);
@@ -108,12 +129,12 @@ function useDragSelection(targetRef, onSelectionChange) {
   };
 
   const isWithinTarget = (pageX, pageY, margin) => {
-    const x1 = pageX - margin.left;
-    const y1 =  pageY - margin.top;
-    const x2 = margin.right - pageX;
-    const y2 = margin.bottom - pageY;
-
-    return x1 >= 0 && y1 >= 0 && x2 >= 0 && y2 >= 0;
+    return {
+      left: pageX - margin.left >= 0,
+      top:  pageY - margin.top >= 0,
+      right: margin.right - pageX >= 0,
+      bottom: margin.bottom - pageY >= 0,
+    }
   }
 
   const registerHandlers = () => {
