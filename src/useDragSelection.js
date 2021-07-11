@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-function useDragSelection() {
+function useDragSelection(onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
   const [isMouseDown, setIsMouseDown] = useState(true);
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(new Set([]));
+  const items = document.querySelectorAll('.box');
 
   useEffect(() => {
     registerHandlers();
@@ -16,9 +18,24 @@ function useDragSelection() {
   }, []);
 
   useEffect(() => {
-    if (dragStart && dragEnd) {
-      setSelectionBox(calculateSelectionBox(dragStart, dragEnd));
-    }
+    if (!dragStart || !dragEnd) return; 
+    const selectionBox = calculateSelectionBox(dragStart, dragEnd);
+    let newIndexes = new Set(selectedIndex);
+
+    items.forEach((item, _i) => {
+      const itemBox = item.getBoundingClientRect();
+      const isIntersecting = boxesIntersect(selectionBox, itemBox);
+
+      if (isIntersecting && !selectedIndex.has(_i)) {
+        newIndexes.add(_i);
+      } else if (!isIntersecting && selectedIndex.has(_i)) {
+        newIndexes.delete(_i);
+      }
+    });
+
+    setSelectedIndex(newIndexes);
+    onSelectionChange(newIndexes);
+    setSelectionBox(selectionBox);
   }, [dragStart, dragEnd]);
 
   const calculateSelectionBox = (start, end) => ({
@@ -27,6 +44,14 @@ function useDragSelection() {
     width: Math.abs(start.x - end.x),
     height: Math.abs(start.y - end.y)
   });
+
+  const boxesIntersect = (boxA, boxB) => (
+    boxA.left <= boxB.left + boxB.width &&
+    boxA.left + boxA.width >= boxB.left &&
+    boxA.top <= boxB.top + boxB.height &&
+    boxA.top + boxA.height >= boxB.top
+  );
+    
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
@@ -72,6 +97,7 @@ function useDragSelection() {
   const resetSelection = () => {
     setDragStart(null);
     setDragEnd(null);
+    setSelectedIndex(new Set([]));
   }
 
   let selectionStyles = {
