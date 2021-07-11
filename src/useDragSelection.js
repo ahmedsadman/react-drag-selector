@@ -3,11 +3,22 @@ import React, { useState, useEffect, useRef } from 'react';
 function useDragSelection(onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
-  const [isMouseDown, setIsMouseDown] = useState(true);
+
+  /* Event listeners cannot react on state values. To fix this, we can use 'useRef'
+  which allows to handle the latest values in event listeners. Whichever state value is 
+  directly used in the event listeners should be handled this way */
+  const [isMouseDown, _setIsMouseDown] = useState(false);
+  const isMouseDownRef = useRef(isMouseDown);
+
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(new Set([]));
   const items = document.querySelectorAll('.box');
+
+  const setIsMouseDown = (data) => {
+    isMouseDownRef.current = data;
+    _setIsMouseDown(data);
+  };
 
   useEffect(() => {
     registerHandlers();
@@ -55,7 +66,7 @@ function useDragSelection(onSelectionChange) {
 
   const onMouseMove = (evt) => {
     evt.preventDefault();
-    if (!isMouseDown) return;
+    if (!isMouseDownRef.current) return;
     setDragEnd({ x: evt.pageX, y: evt.pageY });
   };
 
