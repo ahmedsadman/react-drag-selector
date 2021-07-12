@@ -1,7 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// need a seperate hook for 'useRef'
+function useIntersectionObserver({ root = null }) {
+  // need to use 'useRef', otherwise a new observer will be instantiated every time on compoennt re-render
+  const observer = useRef(
+    new IntersectionObserver((entries) => {
+      console.log('entries are', entries);
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          console.log('intersecting', entry);
+        }
+      })
+    }, {
+      root
+    })
+  );
+
+  return {
+    observer: observer.current
+  }
+}
+
 function useDragSelection(targetRef, onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
+  const selectionRef = useRef(null);
 
   /* Event listeners cannot react on state values. To fix this, we can use 'useRef'
   which allows to handle the latest values in event listeners. Whichever state value is 
@@ -15,7 +37,22 @@ function useDragSelection(targetRef, onSelectionChange) {
   const [showSelection, setShowSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(new Set([]));
   let margin = { top: 0, left: 0 };
-  const items = document.querySelectorAll('.box');
+  const items = useRef([]);
+  
+  /*
+    selectionRef.current is null at this point. For intersection observer API, if root == null (default),
+    it registers with the the browswer viewport. For our case, this is not what we want. We want to register
+    it with the selection box.
+    Need to figure out how can we trigger the IntersectionObserver construction when selectionRef.current != null
+  */
+  const { observer } = useIntersectionObserver({ root: selectionRef.current });
+
+  // can't update state here, otherwise it will fall into inifinite re-renders. So we use 'useRef'
+  const addItem = (item) => {
+    if (!item || items.current.includes(item)) return;
+    items.current.push(item);
+    observer.observe(item);
+  }
 
   const setIsMouseDown = (data) => {
     isMouseDownRef.current = data;
@@ -37,11 +74,12 @@ function useDragSelection(targetRef, onSelectionChange) {
   }, []);
 
   useEffect(() => {
-    if (!dragStart || !dragEnd) return; 
+    if (!dragStart || !dragEnd || !items.current) return; 
     const selectionBox = calculateSelectionBox(dragStart, dragEnd);
     let newIndexes = new Set(selectedIndex);
 
-    items.forEach((item, _i) => {
+    items.current.forEach((item, _i) => {
+      if (!item) return;
       const itemBox = item.getBoundingClientRect();
       const isIntersecting = boxesIntersect(selectionBox, itemBox);
 
@@ -172,11 +210,12 @@ function useDragSelection(targetRef, onSelectionChange) {
   }
 
   const DragSelection = () => (
-    <div style={selectionStyles}></div>
+    <div ref={selectionRef} style={selectionStyles}></div>
   );
 
   return { 
-    DragSelection
+    DragSelection,
+    addItem
   }
 }
 
