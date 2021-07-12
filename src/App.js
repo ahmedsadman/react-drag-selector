@@ -10,7 +10,7 @@ function App() {
     setSelectedIndexes(indexes);
   };
 
-  const { DragSelection } = useDragSelection(targetRef, handleSelection);
+  const { DragSelection, addItem } = useDragSelection(targetRef, handleSelection);
 
   const renderBoxes = () => {
     const boxes = [];
@@ -18,7 +18,7 @@ function App() {
       const boxStyle = {
         backgroundColor: selectedIndexes.has(i) ? 'gray' : 'white'
       }
-      const box = <div className='box' style={boxStyle} key={i} data-draggable={true}>Box</div>;
+      const box = <div className='box' ref={addItem} style={boxStyle} key={i} data-draggable={true}>Box</div>;
       boxes.push(box);
     }
     return boxes;
