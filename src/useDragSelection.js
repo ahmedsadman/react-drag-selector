@@ -28,16 +28,14 @@ function useDragSelection(targetRef, onSelectionChange) {
   /* Event listeners cannot react on state values. To fix this, we can use 'useRef'
   which allows to handle the latest values in event listeners. Whichever state value is 
   directly used in the event listeners should be handled this way */
-  const [dragEnd, _setDragEnd] = useState(null);
-  const dragEndRef = useRef(dragEnd);
-  const [isMouseDown, _setIsMouseDown] = useState(false);
-  const isMouseDownRef = useRef(isMouseDown);
+  const [dragEnd, setDragEnd] = useState(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
 
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(new Set([]));
   let margin = { top: 0, left: 0 };
-  const items = useRef([]);
+  const [items, setItems] = useState([]);
   
   /*
     selectionRef.current is null at this point. For intersection observer API, if root == null (default),
@@ -49,20 +47,10 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   // can't update state here, otherwise it will fall into inifinite re-renders. So we use 'useRef'
   const addItem = (item) => {
-    if (!item || items.current.includes(item)) return;
-    items.current.push(item);
+    if (!item || items.includes(item)) return;
+    setItems((items) => [...items, item]);
     observer.observe(item);
   }
-
-  const setIsMouseDown = (data) => {
-    isMouseDownRef.current = data;
-    _setIsMouseDown(data);
-  };
-
-  const setDragEnd = (data) => {
-    dragEndRef.current = data;
-    _setDragEnd(data);
-  };
 
   useEffect(() => {
     registerHandlers();
@@ -74,11 +62,11 @@ function useDragSelection(targetRef, onSelectionChange) {
   }, []);
 
   useEffect(() => {
-    if (!dragStart || !dragEnd || !items.current) return; 
+    if (!dragStart || !dragEnd || !items) return; 
     const selectionBox = calculateSelectionBox(dragStart, dragEnd);
     let newIndexes = new Set(selectedIndex);
 
-    items.current.forEach((item, _i) => {
+    items.forEach((item, _i) => {
       if (!item) return;
       const itemBox = item.getBoundingClientRect();
       const isIntersecting = boxesIntersect(selectionBox, itemBox);
@@ -122,12 +110,15 @@ function useDragSelection(targetRef, onSelectionChange) {
     
 
   const onMouseMove = (evt) => {
+    console.log('Mouse move started', isMouseDown)
     evt.preventDefault();
-    if (!isMouseDownRef.current) return;
+    if (!isMouseDown) return;
+    
+    console.log('Mouse moved', dragEnd);
 
     let tempPoint = {
-      x: dragEndRef.current?.x || evt.pageX,
-      y: dragEndRef.current?.y || evt.pageY
+      x: dragEnd?.x || evt.pageX,
+      y: dragEnd?.y || evt.pageY
     };
 
     const _isWithinRange = isWithinTarget(evt.pageX, evt.pageY, margin);
@@ -152,6 +143,8 @@ function useDragSelection(targetRef, onSelectionChange) {
   }
 
   const onMouseDown = (evt) => {
+    console.log('Mouse down');
+
     evt.preventDefault();
     const isValidStart = Object.values(isWithinTarget(evt.pageX, evt.pageY, margin)).every(point => point === true);
 
@@ -159,6 +152,7 @@ function useDragSelection(targetRef, onSelectionChange) {
       return;
     }
 
+    console.log('selection started');
     resetSelection();
     setShowSelection(true);
     
