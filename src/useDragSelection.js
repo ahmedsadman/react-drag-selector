@@ -34,7 +34,8 @@ function useDragSelection(targetRef, onSelectionChange) {
   const [selectionBox, setSelectionBox] = useState(null);
   const [showSelection, setShowSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(new Set([]));
-  let margin = { top: 0, left: 0 };
+  let margin = getTargetMargin(targetRef);
+
   const [items, setItems] = useState([]);
   
   /*
@@ -51,15 +52,6 @@ function useDragSelection(targetRef, onSelectionChange) {
     setItems((items) => [...items, item]);
     observer.observe(item);
   }
-
-  useEffect(() => {
-    registerHandlers();
-    getTargetMargin(targetRef);
-
-    return () => {
-      removeHandlers();
-    }
-  }, []);
 
   useEffect(() => {
     if (!dragStart || !dragEnd || !items) return; 
@@ -83,10 +75,10 @@ function useDragSelection(targetRef, onSelectionChange) {
     setSelectionBox(selectionBox);
   }, [dragStart, dragEnd]);
 
-  const getTargetMargin = (target) => {
+  function getTargetMargin(target) {
     if (!target.current) return;
     const boundingBox = target.current.getBoundingClientRect();
-    margin = {
+    return {
       top: boundingBox.top + window.scrollY,
       left: boundingBox.left + window.scrollX,
       bottom: boundingBox.bottom + window.scrollY,
@@ -110,25 +102,24 @@ function useDragSelection(targetRef, onSelectionChange) {
     
 
   const onMouseMove = (evt) => {
-    console.log('Mouse move started', isMouseDown)
+    // console.log('Mouse move started', isMouseDown)
     evt.preventDefault();
     if (!isMouseDown) return;
     
-    console.log('Mouse moved', dragEnd);
 
     let tempPoint = {
-      x: dragEnd?.x || evt.pageX,
-      y: dragEnd?.y || evt.pageY
+      x: dragEnd?.x || evt.clientX,
+      y: dragEnd?.y || evt.clientY
     };
 
-    const _isWithinRange = isWithinTarget(evt.pageX, evt.pageY, margin);
+    const _isWithinRange = isWithinTarget(evt.clientX, evt.clientY, margin);
 
     if (_isWithinRange.top && _isWithinRange.bottom) {
-      tempPoint.y = evt.pageY;
+      tempPoint.y = evt.clientY;
     }
 
     if (_isWithinRange.left && _isWithinRange.right) {
-      tempPoint.x = evt.pageX;
+      tempPoint.x = evt.clientX;
     }
     
     setDragEnd(tempPoint);
@@ -136,6 +127,7 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   const onMouseUp = (evt) => {
     evt.preventDefault();
+    
     setShowSelection(false);
     setSelectionBox(null);
     setIsMouseDown(false);
@@ -143,16 +135,13 @@ function useDragSelection(targetRef, onSelectionChange) {
   }
 
   const onMouseDown = (evt) => {
-    console.log('Mouse down');
-
     evt.preventDefault();
     const isValidStart = Object.values(isWithinTarget(evt.pageX, evt.pageY, margin)).every(point => point === true);
 
-    if (evt.target.dataset.draggable || !isValidStart) {
-      return;
-    }
+    // if (evt.target.dataset.draggable || !isValidStart) {
+    //   return;
+    // }
 
-    console.log('selection started');
     resetSelection();
     setShowSelection(true);
     
@@ -167,20 +156,6 @@ function useDragSelection(targetRef, onSelectionChange) {
       right: margin.right - pageX >= 0,
       bottom: margin.bottom - pageY >= 0,
     }
-  }
-
-  const registerHandlers = () => {
-    window.document.addEventListener('mousedown', onMouseDown);
-    window.document.addEventListener('mouseup', onMouseUp);
-    window.document.addEventListener('mousemove', onMouseMove);
-    console.log('successfully registered event handlers');
-  };
-
-  const removeHandlers = () => {
-    window.document.removeEventListener('mousedown', onMouseDown);
-    window.document.removeEventListener('mouseup', onMouseUp);
-    window.document.removeEventListener('mousemove', onMouseMove);
-    console.log('cleaned up event handlers');
   }
 
   const resetSelection = () => {
@@ -209,7 +184,10 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   return { 
     DragSelection,
-    addItem
+    addItem,
+    onMouseDown,
+    onMouseMove,
+    onMouseUp,
   }
 }
 

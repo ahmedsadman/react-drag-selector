@@ -10,7 +10,7 @@ function App() {
     setSelectedIndexes(indexes);
   };
 
-  const { DragSelection, addItem } = useDragSelection(targetRef, handleSelection);
+  const { DragSelection, addItem, onMouseDown, onMouseUp, onMouseMove } = useDragSelection(targetRef, handleSelection);
 
   const renderBoxes = () => {
     const boxes = [];
@@ -25,7 +25,7 @@ function App() {
   }
 
   return (
-    <div className='container' ref={targetRef}>
+    <div className='container' ref={targetRef} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
       <DragSelection />
       {renderBoxes()}
     </div>
