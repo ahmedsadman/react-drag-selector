@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 
 // need a seperate hook for 'useRef'
 function useIntersectionObserver({ root = null }) {
@@ -172,39 +178,43 @@ function useDragSelection(targetRef, onSelectionChange) {
     setSelectedIndex(new Set([]));
   };
 
-  let selectionStyles = {
-    position: "absolute",
-    zIndex: 100,
-    border: "1px solid red",
-    display: showSelection ? "inline-block" : "none",
-  };
-
-  if (selectionBox) {
-    selectionStyles = {
-      ...selectionStyles,
-      ...selectionBox,
+  let selectionStyles = useMemo(() => {
+    let selectionStyles = {
+      position: "absolute",
+      zIndex: 100,
+      border: "1px solid red",
+      display: showSelection ? "inline-block" : "none",
     };
-  }
 
+    if (selectionBox) {
+      selectionStyles = {
+        ...selectionStyles,
+        ...selectionBox,
+      };
+    }
+
+    return selectionStyles;
+  }, [showSelection, selectionBox]);
+
+  // TODO: Create separate component and pass props instead of capturing values from scope
   const DragSelection = useCallback(
     () => (
       <div
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}
+
         style={{
           height: "100vh",
           width: "100vw",
           top: 0,
           left: 0,
           position: "absolute",
-        }}
-
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
-        onMouseMove={onMouseMove}>
-
+        }}>
         <div ref={selectionRef} style={selectionStyles}></div>
       </div>
     ),
-    [selectionStyles],
+    [selectionStyles, onMouseDown, onMouseMove, onMouseUp],
   );
 
   return {
