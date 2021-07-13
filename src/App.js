@@ -13,9 +13,6 @@ function App() {
   const {
     DragSelection,
     addItem,
-    onMouseDown,
-    onMouseUp,
-    onMouseMove,
   } = useDragSelection(targetRef, handleSelection);
 
   const renderBoxes = () => {
@@ -40,12 +37,7 @@ function App() {
   };
 
   return (
-    <div
-      className="container"
-      ref={targetRef}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseMove={onMouseMove}>
+    <div className="container" ref={targetRef}>
       <DragSelection />
       {renderBoxes()}
     </div>
