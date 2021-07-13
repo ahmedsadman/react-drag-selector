@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 // need a seperate hook for 'useRef'
 function useIntersectionObserver({ root = null }) {
@@ -209,9 +209,9 @@ function useDragSelection(targetRef, onSelectionChange) {
     }
   }
 
-  const DragSelection = () => (
+  const DragSelection = useCallback(() => (
     <div ref={selectionRef} style={selectionStyles}></div>
-  );
+  ), [selectionStyles]);
 
   return { 
     DragSelection,
