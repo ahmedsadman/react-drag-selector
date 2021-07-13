@@ -140,9 +140,9 @@ function useDragSelection(targetRef, onSelectionChange) {
       isWithinTarget(evt.pageX, evt.pageY, margin),
     ).every((point) => point === true);
 
-    // if (evt.target.dataset.draggable || !isValidStart) {
-    //   return;
-    // }
+    if (!isValidStart) {
+      return;
+    }
 
     resetSelection();
     setShowSelection(true);
@@ -181,16 +181,29 @@ function useDragSelection(targetRef, onSelectionChange) {
   }
 
   const DragSelection = useCallback(
-    () => <div ref={selectionRef} style={selectionStyles}></div>,
+    () => (
+      <div
+        style={{
+          height: "100vh",
+          width: "100vw",
+          top: 0,
+          left: 0,
+          position: "absolute",
+        }}
+
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}>
+
+        <div ref={selectionRef} style={selectionStyles}></div>
+      </div>
+    ),
     [selectionStyles],
   );
 
   return {
     DragSelection,
     addItem,
-    onMouseDown,
-    onMouseMove,
-    onMouseUp,
   };
 }
 
