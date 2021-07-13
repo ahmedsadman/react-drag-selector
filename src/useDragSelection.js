@@ -107,6 +107,12 @@ function useDragSelection(targetRef, onSelectionChange) {
     evt.preventDefault();
     if (!isMouseDown) return;
 
+    const isButtonPressed = !!evt.buttons;
+    if (!isButtonPressed) {
+      onMouseUp(evt);
+      return;
+    }
+
     let tempPoint = {
       x: dragEnd?.x || evt.clientX,
       y: dragEnd?.y || evt.clientY,
