@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
-import useDragSelection from './useDragSelection';
-import './App.css';
+import React, { useRef, useState } from "react";
+import useDragSelection from "./useDragSelection";
+import "./App.css";
 
 function App() {
   const targetRef = useRef(null);
@@ -10,22 +10,42 @@ function App() {
     setSelectedIndexes(indexes);
   };
 
-  const { DragSelection, addItem, onMouseDown, onMouseUp, onMouseMove } = useDragSelection(targetRef, handleSelection);
+  const {
+    DragSelection,
+    addItem,
+    onMouseDown,
+    onMouseUp,
+    onMouseMove,
+  } = useDragSelection(targetRef, handleSelection);
 
   const renderBoxes = () => {
     const boxes = [];
     for (let i = 0; i < 20; i++) {
       const boxStyle = {
-        backgroundColor: selectedIndexes.has(i) ? 'gray' : 'white'
-      }
-      const box = <div className='box' ref={addItem} style={boxStyle} key={i} data-draggable={true}>Box</div>;
+        backgroundColor: selectedIndexes.has(i) ? "gray" : "white",
+      };
+      const box = (
+        <div
+          className="box"
+          ref={addItem}
+          style={boxStyle}
+          key={i}
+          data-draggable={true}>
+          Box
+        </div>
+      );
       boxes.push(box);
     }
     return boxes;
-  }
+  };
 
   return (
-    <div className='container' ref={targetRef} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
+    <div
+      className="container"
+      ref={targetRef}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseMove={onMouseMove}>
       <DragSelection />
       {renderBoxes()}
     </div>

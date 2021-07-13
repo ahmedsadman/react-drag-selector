@@ -1,24 +1,27 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // need a seperate hook for 'useRef'
 function useIntersectionObserver({ root = null }) {
   // need to use 'useRef', otherwise a new observer will be instantiated every time on compoennt re-render
   const observer = useRef(
-    new IntersectionObserver((entries) => {
-      console.log('entries are', entries);
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          console.log('intersecting', entry);
-        }
-      })
-    }, {
-      root
-    })
+    new IntersectionObserver(
+      (entries) => {
+        console.log("entries are", entries);
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            console.log("intersecting", entry);
+          }
+        });
+      },
+      {
+        root,
+      },
+    ),
   );
 
   return {
-    observer: observer.current
-  }
+    observer: observer.current,
+  };
 }
 
 function useDragSelection(targetRef, onSelectionChange) {
@@ -37,7 +40,7 @@ function useDragSelection(targetRef, onSelectionChange) {
   let margin = getTargetMargin(targetRef);
 
   const [items, setItems] = useState([]);
-  
+
   /*
     selectionRef.current is null at this point. For intersection observer API, if root == null (default),
     it registers with the the browswer viewport. For our case, this is not what we want. We want to register
@@ -51,10 +54,10 @@ function useDragSelection(targetRef, onSelectionChange) {
     if (!item || items.includes(item)) return;
     setItems((items) => [...items, item]);
     observer.observe(item);
-  }
+  };
 
   useEffect(() => {
-    if (!dragStart || !dragEnd || !items) return; 
+    if (!dragStart || !dragEnd || !items) return;
     const selectionBox = calculateSelectionBox(dragStart, dragEnd);
     let newIndexes = new Set(selectedIndex);
 
@@ -82,7 +85,7 @@ function useDragSelection(targetRef, onSelectionChange) {
       top: boundingBox.top + window.scrollY,
       left: boundingBox.left + window.scrollX,
       bottom: boundingBox.bottom + window.scrollY,
-      right: boundingBox.right + window.scrollX
+      right: boundingBox.right + window.scrollX,
     };
   }
 
@@ -90,26 +93,23 @@ function useDragSelection(targetRef, onSelectionChange) {
     left: Math.min(dragStart.x, dragEnd.x),
     top: Math.min(dragStart.y, dragEnd.y),
     width: Math.abs(start.x - end.x),
-    height: Math.abs(start.y - end.y)
+    height: Math.abs(start.y - end.y),
   });
 
-  const boxesIntersect = (boxA, boxB) => (
+  const boxesIntersect = (boxA, boxB) =>
     boxA.left <= boxB.left + boxB.width &&
     boxA.left + boxA.width >= boxB.left &&
     boxA.top <= boxB.top + boxB.height &&
-    boxA.top + boxA.height >= boxB.top
-  );
-    
+    boxA.top + boxA.height >= boxB.top;
 
   const onMouseMove = (evt) => {
     // console.log('Mouse move started', isMouseDown)
     evt.preventDefault();
     if (!isMouseDown) return;
-    
 
     let tempPoint = {
       x: dragEnd?.x || evt.clientX,
-      y: dragEnd?.y || evt.clientY
+      y: dragEnd?.y || evt.clientY,
     };
 
     const _isWithinRange = isWithinTarget(evt.clientX, evt.clientY, margin);
@@ -121,22 +121,24 @@ function useDragSelection(targetRef, onSelectionChange) {
     if (_isWithinRange.left && _isWithinRange.right) {
       tempPoint.x = evt.clientX;
     }
-    
+
     setDragEnd(tempPoint);
   };
 
   const onMouseUp = (evt) => {
     evt.preventDefault();
-    
+
     setShowSelection(false);
     setSelectionBox(null);
     setIsMouseDown(false);
     resetSelection();
-  }
+  };
 
   const onMouseDown = (evt) => {
     evt.preventDefault();
-    const isValidStart = Object.values(isWithinTarget(evt.pageX, evt.pageY, margin)).every(point => point === true);
+    const isValidStart = Object.values(
+      isWithinTarget(evt.pageX, evt.pageY, margin),
+    ).every((point) => point === true);
 
     // if (evt.target.dataset.draggable || !isValidStart) {
     //   return;
@@ -144,7 +146,7 @@ function useDragSelection(targetRef, onSelectionChange) {
 
     resetSelection();
     setShowSelection(true);
-    
+
     setIsMouseDown(true);
     setDragStart({ x: evt.pageX, y: evt.pageY });
   };
@@ -152,43 +154,44 @@ function useDragSelection(targetRef, onSelectionChange) {
   const isWithinTarget = (pageX, pageY, margin) => {
     return {
       left: pageX - margin.left >= 0,
-      top:  pageY - margin.top >= 0,
+      top: pageY - margin.top >= 0,
       right: margin.right - pageX >= 0,
       bottom: margin.bottom - pageY >= 0,
-    }
-  }
+    };
+  };
 
   const resetSelection = () => {
     setDragStart(null);
     setDragEnd(null);
     setSelectedIndex(new Set([]));
-  }
+  };
 
   let selectionStyles = {
-    position: 'absolute',
+    position: "absolute",
     zIndex: 100,
-    border: '1px solid red',
-    display: showSelection ? 'inline-block' : 'none'
-  }
+    border: "1px solid red",
+    display: showSelection ? "inline-block" : "none",
+  };
 
   if (selectionBox) {
     selectionStyles = {
       ...selectionStyles,
-      ...selectionBox
-    }
+      ...selectionBox,
+    };
   }
 
-  const DragSelection = useCallback(() => (
-    <div ref={selectionRef} style={selectionStyles}></div>
-  ), [selectionStyles]);
+  const DragSelection = useCallback(
+    () => <div ref={selectionRef} style={selectionStyles}></div>,
+    [selectionStyles],
+  );
 
-  return { 
+  return {
     DragSelection,
     addItem,
     onMouseDown,
     onMouseMove,
     onMouseUp,
-  }
+  };
 }
 
 export default useDragSelection;
