@@ -72,45 +72,16 @@ function useDragSelection(targetRef, onSelectionChange) {
     boxA.top <= boxB.top + boxB.height &&
     boxA.top + boxA.height >= boxB.top;
 
-  const onMouseMove = (evt) => {
-    // console.log('Mouse move started', isMouseDown)
-    evt.preventDefault();
-    if (!isMouseDown) return;
-
-    const isButtonPressed = !!evt.buttons;
-    if (!isButtonPressed) {
-      onMouseUp(evt);
-      return;
-    }
-
-    let tempPoint = {
-      x: dragEnd?.x || evt.clientX,
-      y: dragEnd?.y || evt.clientY,
-    };
-
-    const _isWithinRange = isWithinTarget(evt.clientX, evt.clientY, margin);
-
-    if (_isWithinRange.top && _isWithinRange.bottom) {
-      tempPoint.y = evt.clientY;
-    }
-
-    if (_isWithinRange.left && _isWithinRange.right) {
-      tempPoint.x = evt.clientX;
-    }
-
-    setDragEnd(tempPoint);
-  };
-
-  const onMouseUp = (evt) => {
+  const onMouseUp = useCallback((evt) => {
     evt.preventDefault();
 
     setShowSelection(false);
     setSelectionBox(null);
     setIsMouseDown(false);
     resetSelection();
-  };
+  }, []); 
 
-  const onMouseDown = (evt) => {
+  const onMouseDown = useCallback((evt) => {
     evt.preventDefault();
     const isValidStart = Object.values(
       isWithinTarget(evt.pageX, evt.pageY, margin),
@@ -125,7 +96,35 @@ function useDragSelection(targetRef, onSelectionChange) {
 
     setIsMouseDown(true);
     setDragStart({ x: evt.pageX, y: evt.pageY });
-  };
+  }, [margin]); 
+
+  const onMouseMove = useCallback((evt) => {
+      evt.preventDefault();
+      if (!isMouseDown) return;
+  
+      const isButtonPressed = !!evt.buttons;
+      if (!isButtonPressed) {
+        onMouseUp(evt);
+        return;
+      }
+  
+      let tempPoint = {
+        x: dragEnd?.x || evt.clientX,
+        y: dragEnd?.y || evt.clientY,
+      };
+  
+      const _isWithinRange = isWithinTarget(evt.clientX, evt.clientY, margin);
+  
+      if (_isWithinRange.top && _isWithinRange.bottom) {
+        tempPoint.y = evt.clientY;
+      }
+  
+      if (_isWithinRange.left && _isWithinRange.right) {
+        tempPoint.x = evt.clientX;
+      }
+  
+      setDragEnd(tempPoint);
+  }, [dragEnd, isMouseDown, margin, onMouseUp]);
 
   const isWithinTarget = (pageX, pageY, margin) => {
     return {
