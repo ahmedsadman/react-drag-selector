@@ -6,37 +6,11 @@ import React, {
   useMemo,
 } from "react";
 
-// need a seperate hook for 'useRef'
-function useIntersectionObserver({ root = null }) {
-  // need to use 'useRef', otherwise a new observer will be instantiated every time on compoennt re-render
-  const observer = useRef(
-    new IntersectionObserver(
-      (entries) => {
-        console.log("entries are", entries);
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            console.log("intersecting", entry);
-          }
-        });
-      },
-      {
-        root,
-      },
-    ),
-  );
-
-  return {
-    observer: observer.current,
-  };
-}
 
 function useDragSelection(targetRef, onSelectionChange) {
   const [dragStart, setDragStart] = useState(null);
   const selectionRef = useRef(null);
-
-  /* Event listeners cannot react on state values. To fix this, we can use 'useRef'
-  which allows to handle the latest values in event listeners. Whichever state value is 
-  directly used in the event listeners should be handled this way */
+  
   const [dragEnd, setDragEnd] = useState(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
 
@@ -47,19 +21,9 @@ function useDragSelection(targetRef, onSelectionChange) {
 
   const [items, setItems] = useState([]);
 
-  /*
-    selectionRef.current is null at this point. For intersection observer API, if root == null (default),
-    it registers with the the browswer viewport. For our case, this is not what we want. We want to register
-    it with the selection box.
-    Need to figure out how can we trigger the IntersectionObserver construction when selectionRef.current != null
-  */
-  const { observer } = useIntersectionObserver({ root: selectionRef.current });
-
-  // can't update state here, otherwise it will fall into inifinite re-renders. So we use 'useRef'
   const addItem = (item) => {
     if (!item || items.includes(item)) return;
     setItems((items) => [...items, item]);
-    observer.observe(item);
   };
 
   useEffect(() => {
